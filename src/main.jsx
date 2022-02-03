@@ -6,13 +6,19 @@ import { ApolloProvider } from '@apollo/client';
 import client from './gql/client';
 
 import { Provider } from 'react-redux';
-import store from './redux/store/store';
+import { PersistGate } from 'redux-persist/lib/integration/react';
+
+import { store, persitor } from './redux/store/store';
+import GlobalStyle from './styles/globalStyles';
 
 ReactDOM.render(
     <Provider store={store}>
-      <ApolloProvider client={client}>
-          <App />
-      </ApolloProvider>
+      <PersistGate loading={null} persistor={persitor}>
+        <ApolloProvider client={client}>
+            <App />
+            <GlobalStyle />
+        </ApolloProvider>
+      </PersistGate>
     </Provider>,
   document.getElementById('root')
 );

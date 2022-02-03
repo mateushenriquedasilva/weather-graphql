@@ -1,9 +1,11 @@
 import Home from "./pages/Home";
+import MyRoutes from "./routes/routes";
+
 
 function App() {
   return (
     <div>
-      <Home />
+      <MyRoutes />
     </div>
   )
 }

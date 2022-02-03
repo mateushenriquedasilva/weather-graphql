@@ -1,31 +1,91 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
-import { useQuery } from '@apollo/client';
-import { GET_CITY_BY_NAME  } from '../../gql/query';
+import { gql } from "@apollo/client";
 
-function Home() {
+import client from '../../gql/client';
 
-    const { loading, error, data } = useQuery(GET_CITY_BY_NAME);
-    function celsius(){
-        let celsius = data.getCityByName.weather.temperature.actual - 273;
-        return celsius.toFixed(0);
+// 
+function Home() { 
+
+    const [city, setCity] = useState({
+        name: '"Jaboatao dos Guararapes"'
+    })
+
+    const [search, setSearch] = useState('')
+    const [loading, setLoading] = useState(false)
+
+    let nomeDaCidadeSemAcento = search.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+
+    const [request, setRequest] = useState(true)
+    
+    useEffect(() => {
+        initial()
+    },[request])
+
+    function initial() {
+        client.query({
+            query: gql`
+                query {
+                    getCityByName(name: ${city.name}){
+                        name
+                        country
+                        weather{
+                            summary{
+                                description
+                            }
+                            
+                            temperature{
+                                actual
+                            }
+                        }
+                    }
+                }
+            `
+        }).then(resp => {
+            setCity({...city, data: resp.data.getCityByName})
+            setLoading(true)
+        })
+        .catch(error => console.log(error))
+    }
+
+    function celsius() {
+        let celsius = city.data.weather.temperature.actual - 273
+        return celsius.toFixed(0)
     }
 
     return (
         <main>
-            {loading ? (
-                <p>loading...</p>
-            ) : error ? (
-                <p>Error: {error}</p>
-            ) : (
+            <input type="text" onChange={(e) => {
+                setSearch(e.target.value)
+            }}/>
+
+            <button onClick={() => {
+                setCity({...city, name: `"${nomeDaCidadeSemAcento}"`})
+                request ? setRequest(false) : setRequest(true)
+                setLoading(false)
+            }}>Buscar</button>
+
             <div>
-                <div>
-                    <h2>{data.getCityByName.name}</h2>
-                    <p>{data.getCityByName.weather.summary.description}</p>
-                    <p>{celsius()}°C</p>
-                </div>
+                {
+                    city.data ? (
+                        <div>
+                            {loading ?(
+                                <div>
+                                    <h2>{city.data.name}</h2>
+                                    <h4>{city.data.country}</h4>
+                                    <p>{city.data.weather.summary.description}</p>
+                                    <p>{celsius()}°C</p>
+                                </div>
+                            ) : (
+                                <p>loading...</p>
+                            )   
+                            }
+                        </div>
+                    ) : (
+                        <p>Sorry :(</p>
+                    )
+                }
             </div>
-            )}
         </main>
     );
 }
